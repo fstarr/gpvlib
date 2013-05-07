@@ -34,11 +34,11 @@ entity spi2par is
 		constant dout_width : integer := 32
 	);
 	Port (
-		clk 			: in  STD_LOGIC;
-		rst			: in  STD_LOGIC;
+		clk 		: in  STD_LOGIC;
+		rst		: in  STD_LOGIC;
 		din_rdy		: in  STD_LOGIC;
-		din			: in  STD_LOGIC;
-		dout			: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
+		din		: in  STD_LOGIC;
+		dout		: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
 		dout_valid	: out  STD_LOGIC
 	);
 	-- set width of internal counter. no need to touch this!
