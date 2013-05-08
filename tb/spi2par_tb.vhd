@@ -25,29 +25,37 @@ ARCHITECTURE behavior OF spi2par_tb IS
 	-- Component Declaration for the Unit Under Test (UUT)
 	COMPONENT spi2par
 	PORT(
-		clk : IN  std_logic;
-		rst : IN  std_logic;
-		ce  : IN  std_logic;
-		din_rdy : IN  std_logic;
-		din : IN  std_logic;
-		dout : OUT  std_logic_vector(31 downto 0);
-		dout_valid : OUT  std_logic
+		-- Ctrl ports
+		clk		: IN  std_logic;
+		sclk		: IN  std_logic;
+		rst		: IN  std_logic;
+		ce		: IN  std_logic;
+		-- SPI-like interface
+		din_rdy		: IN  std_logic;
+		din		: IN  std_logic;
+		sclk_o		: OUT std_logic;
+		-- Output interface
+		dout		: OUT  std_logic_vector(31 downto 0);
+		dout_valid	: OUT  std_logic
 	);
 	END COMPONENT;
 
 	-- Inputs
-	signal clk : std_logic := '0';
-	signal rst : std_logic := '0';
-	signal ce  : std_logic := '0';
-	signal din_rdy : std_logic := '0';
-	signal din : std_logic := '0';
+	signal clk	: std_logic := '0';
+	signal sclk	: std_logic := '0';
+	signal rst	: std_logic := '0';
+	signal ce	: std_logic := '0';
+	signal din_rdy	: std_logic := '0';
+	signal din	: std_logic := '0';
 
 	-- Outputs
-	signal dout : std_logic_vector(31 downto 0);
-	signal dout_valid : std_logic;
+	signal dout		: std_logic_vector(31 downto 0);
+	signal dout_valid	: std_logic;
+	signal sclk_o		: std_logic;
 
 	-- Clock period definitions
-	constant clk_period : time := 10 ns;
+	constant clk_period	: time := 244.140625 ns;	-- 4.096 MHz
+	constant sclk_period	: time := 488.281250 ns;	-- 2.048 MHz
 
 	signal input_data: std_logic_vector( 0 downto 0 ) := "0";
 
@@ -57,10 +65,12 @@ BEGIN
 	uut: spi2par
 	PORT MAP (
 		clk => clk,
+		sclk => sclk,
 		rst => rst,
 		ce => ce,
 		din_rdy => din_rdy,
 		din => din,
+		sclk_o => sclk_o,
 		dout => dout,
 		dout_valid => dout_valid
 	);
@@ -73,7 +83,14 @@ BEGIN
 		clk <= '0';
 		wait for clk_period/2;
 	end process;
- 
+
+	sclk_process :process
+	begin
+		sclk <= '1';
+		wait for sclk_period/2;
+		sclk <= '0';
+		wait for sclk_period/2;
+	end process;
 
 	-- Stimulus process
 	stim_proc: process
@@ -93,7 +110,7 @@ BEGIN
 		for j in 1 to 5 loop
 			-- set ready signal
 			din_rdy <= '1';
-			wait for clk_period;
+			wait for sclk_period*4;
 			din_rdy <= '0';
 			
 			-- generate random input data on din
@@ -101,7 +118,7 @@ BEGIN
 				UNIFORM( seed1, seed2, rand );
 				input_data <= std_logic_vector( to_unsigned( integer( rand ), 1 ) );
 				din <= input_data(0);
-				wait for clk_period;
+				wait for sclk_period;
 			end loop;
 		end loop;
 

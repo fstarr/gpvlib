@@ -34,12 +34,17 @@ entity spi2par is
 		constant dout_width : integer := 32
 	);
 	Port (
-		clk 			: in  STD_LOGIC;
-		rst			: in  STD_LOGIC;
-		ce			: in  STD_LOGIC;
+		-- Ctrl ports
+		clk		: in  STD_LOGIC;	-- fclk (4.096 MHz)
+		sclk		: in  STD_LOGIC;	-- sclk (256kHz <= sclk <= 2.048 MHz)
+		rst		: in  STD_LOGIC;
+		ce		: in  STD_LOGIC;
+		-- SPI-like interface
 		din_rdy		: in  STD_LOGIC;
-		din			: in  STD_LOGIC;
-		dout			: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
+		din		: in  STD_LOGIC;
+		sclk_o		: out STD_LOGIC;
+		-- Output interface
+		dout		: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
 		dout_valid	: out  STD_LOGIC
 	);
 	-- set width of internal counter. no need to touch this!
@@ -54,17 +59,20 @@ architecture Behavioral of spi2par is
 	signal nstate	: fsmtype := ctrl_init;	-- next state
 
 	-- internal signals
+	signal sclk_op: std_logic := '0';
 	signal s_cnt  : std_logic_vector( cnt_width-1 downto 0 ) := ( others => '0' );
 	signal s_dout : std_logic_vector( dout_width-1 downto 0 ) := ( others => '0' );
+	signal sclk_active : std_logic := '0';
+	signal sclk_active_op : std_logic := '0';
 
 begin
 	
-	fsm_state_update: process( rst, clk )
+	fsm_state_update: process( rst, sclk )
 	begin
 		if( rst = '1' ) then
 			cstate <= ctrl_init;
 		elsif( ce = '1' ) then
-			if( rising_edge( clk ) ) then
+			if( rising_edge( sclk ) ) then
 				cstate <= nstate;
 			end if;
 		end if;
@@ -89,13 +97,13 @@ begin
 				dout_valid <= '0';
 				s_dout( 31-conv_integer(s_cnt) ) <= din;
 				s_cnt <= s_cnt + 1;
-				
+
 			when readbit1 =>
 				-- read current bit from din
 				dout_valid <= '0';
 				s_dout( 31-conv_integer(s_cnt) ) <= din;
 				s_cnt <= s_cnt + 1;
-							
+				
 			when output =>
 				-- present 32-bit output register
 				-- to output port (+ enable valid signal)
@@ -103,26 +111,28 @@ begin
 				dout_valid <= '1';
 				-- reset internal counter
 				s_cnt <= ( others => '0' );
-							
+
 			when others =>
 				null;
 		end case;
 	end process;
 	
-	fsm_state_transition: process( cstate, din_rdy )
+	fsm_state_transition: process( cstate, sclk_active_op )
 	begin
 		nstate <= cstate;
 		
 		case cstate is
 			when ctrl_init =>
-				if( din_rdy = '1' ) then
+				--if( din_rdy = '1' ) then
+				if( sclk_active_op = '1' ) then
 					nstate <= readbit0;
 				else
 					nstate <= idle;
 				end if;
 					
 			when idle =>
-				if( din_rdy = '1' ) then
+				--if( din_rdy = '1' ) then
+				if( sclk_active_op = '1' ) then
 					nstate <= readbit0;
 				else
 					nstate <= idle;
@@ -143,7 +153,8 @@ begin
 				end if;
 				
 			when output =>
-				if( din_rdy = '1' ) then
+				--if( din_rdy = '1' ) then
+				if( sclk_active_op = '1' ) then
 					nstate <= readbit0;
 				else
 					nstate <= idle;
@@ -153,5 +164,40 @@ begin
 				nstate <= ctrl_init;
 		end case;
 	end process;
+
+	sclk_o_gen: process( rst, ce, clk, din_rdy, s_cnt )
+	begin
+		if( rst = '1' ) then
+			sclk_active <= '0';
+		elsif( ce = '1' ) then
+			if( rising_edge( clk ) ) then
+				if( din_rdy = '1' ) then
+					sclk_active <= '1';
+				elsif( conv_integer(s_cnt) >= 31 ) then
+					sclk_active <= '0';
+				end if;
+			end if;
+		end if;
+	end process;
+
+	sclk_o_wire: process( clk, sclk_active )
+	begin
+		if( rising_edge( clk ) ) then
+			if( sclk_active = '1' ) then
+				sclk_op <= sclk;
+			else
+				sclk_op <= '0';
+			end if;
+		end if;
+	end process;
+
+	sclk_active_op_gen: process( sclk_op )
+	begin
+		if( rising_edge( sclk_op ) ) then
+			sclk_active_op <= sclk_active;
+		end if;
+	end process;
+
+	sclk_o <= sclk_op;
 	
 end Behavioral;
