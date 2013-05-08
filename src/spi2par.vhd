@@ -12,7 +12,7 @@
 --			For simulation in Xilinx iSim use tb/spi2par_tb.vhd
 --			together with waveform config file tb/spi2par_tb.wcfg
 --
--- Dependencies:	math_pack:log2 (packages/math_pack.vhd)
+-- Dependencies:	math_pack:log2 (src/math_pack.vhd)
 --
 --
 -- Revision: 		Rev. 0.10 - On RTL functionally validated module (iSim)
@@ -34,11 +34,12 @@ entity spi2par is
 		constant dout_width : integer := 32
 	);
 	Port (
-		clk 		: in  STD_LOGIC;
-		rst		: in  STD_LOGIC;
+		clk 			: in  STD_LOGIC;
+		rst			: in  STD_LOGIC;
+		ce			: in  STD_LOGIC;
 		din_rdy		: in  STD_LOGIC;
-		din		: in  STD_LOGIC;
-		dout		: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
+		din			: in  STD_LOGIC;
+		dout			: out  STD_LOGIC_VECTOR (dout_width-1 downto 0);
 		dout_valid	: out  STD_LOGIC
 	);
 	-- set width of internal counter. no need to touch this!
@@ -62,8 +63,10 @@ begin
 	begin
 		if( rst = '1' ) then
 			cstate <= ctrl_init;
-		elsif( rising_edge( clk ) ) then
-			cstate <= nstate;
+		elsif( ce = '1' ) then
+			if( rising_edge( clk ) ) then
+				cstate <= nstate;
+			end if;
 		end if;
 	end process;
 	

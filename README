@@ -11,8 +11,19 @@
 
 README
 
+Table of Contents
 
-Naming conventions:
+  1. Module overview
+  A. Directory structure/Module organization
+
+
+1. Module overview
+
+spi2par		Data collector that transforms serial input into parallel
+		output using a SPI-like input interface.
+
+
+A. Directory structure/Module organization
 
 For VHDL module width name "<module>" (in src/ directory)
 place documentation/testbench files with filename prefix "<module>_"
