@@ -35,7 +35,7 @@ end freqDiv;
 
 architecture Behavioral of freqDiv is
 	signal int_cnt	: integer := 0;
-	signal int_clkdv: std_logic := '0';
+	signal int_clkdv: std_logic := '1';
 begin
 	-- Frequency divider process
 	freqdiv: process(rst, clk)

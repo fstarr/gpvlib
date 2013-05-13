@@ -60,19 +60,20 @@ architecture Behavioral of spi2par is
 
 	-- internal signals
 	signal sclk_op: std_logic := '0';
-	signal s_cnt  : std_logic_vector( cnt_width-1 downto 0 ) := ( others => '0' );
+	signal s_cnt  : integer := 0;
+	signal sa_cnt  : integer := 0;
 	signal s_dout : std_logic_vector( dout_width-1 downto 0 ) := ( others => '0' );
 	signal sclk_active : std_logic := '0';
 	signal sclk_active_op : std_logic := '0';
 
 begin
 	
-	fsm_state_update: process( rst, sclk )
+	fsm_state_update: process( rst, sclk_op )
 	begin
 		if( rst = '1' ) then
 			cstate <= ctrl_init;
 		elsif( ce = '1' ) then
-			if( rising_edge( sclk ) ) then
+			if( rising_edge( sclk_op ) ) then
 				cstate <= nstate;
 			end if;
 		end if;
@@ -85,7 +86,7 @@ begin
 				-- resest all outputs and internals
 				dout <= ( others => '0' );
 				dout_valid <= '0';
-				s_cnt <= ( others => '0' );
+				s_cnt <= 0;
 				s_dout <= ( others => '0' );
 				
 			when idle =>
@@ -95,13 +96,13 @@ begin
 			when readbit0 =>
 				-- read current bit from din
 				dout_valid <= '0';
-				s_dout( 31-conv_integer(s_cnt) ) <= din;
+				s_dout( 31-s_cnt ) <= din;
 				s_cnt <= s_cnt + 1;
 
 			when readbit1 =>
 				-- read current bit from din
 				dout_valid <= '0';
-				s_dout( 31-conv_integer(s_cnt) ) <= din;
+				s_dout( 31-s_cnt ) <= din;
 				s_cnt <= s_cnt + 1;
 				
 			when output =>
@@ -110,7 +111,7 @@ begin
 				dout <= s_dout;
 				dout_valid <= '1';
 				-- reset internal counter
-				s_cnt <= ( others => '0' );
+				s_cnt <= 0;
 
 			when others =>
 				null;
@@ -139,14 +140,14 @@ begin
 				end if;
 				
 			when readbit0 =>
-				if( conv_integer(s_cnt) < 31 ) then
+				if( s_cnt < 31 ) then
 					nstate <= readbit1;
 				else
 					nstate <= output;
 				end if;
 				
 			when readbit1 =>
-				if( conv_integer(s_cnt) < 31 ) then
+				if( s_cnt < 31 ) then
 					nstate <= readbit0;
 				else
 					nstate <= output;
@@ -169,11 +170,14 @@ begin
 	begin
 		if( rst = '1' ) then
 			sclk_active <= '0';
+			sa_cnt <= 0;
 		elsif( ce = '1' ) then
 			if( rising_edge( clk ) ) then
 				if( din_rdy = '1' ) then
+					sa_cnt <= 0;
 					sclk_active <= '1';
-				elsif( conv_integer(s_cnt) >= 31 ) then
+				elsif( sa_cnt >= 32 ) then
+					sa_cnt <= sa_cnt + 1;
 					sclk_active <= '0';
 				end if;
 			end if;
