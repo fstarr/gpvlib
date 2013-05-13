@@ -19,6 +19,9 @@ Table of Contents
 
 1. Module overview
 
+freqDiv		Frequency divider that generates a clock signal by dividing
+		the input clock frequency by a user definable sampling factor.
+
 spi2par		Data collector that transforms serial input into parallel
 		output using a SPI-like input interface.
 
