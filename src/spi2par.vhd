@@ -191,9 +191,9 @@ begin
 		end if;
 	end process;
 
-	sclk_active_op_gen: process( sclk_op )
+	sclk_active_op_gen: process( sclk )
 	begin
-		if( rising_edge( sclk_op ) ) then
+		if( rising_edge( sclk ) ) then
 			sclk_active_op <= sclk_active;
 		end if;
 	end process;
