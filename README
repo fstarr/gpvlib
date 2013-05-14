@@ -22,6 +22,13 @@ Table of Contents
 freqDiv		Frequency divider that generates a clock signal by dividing
 		the input clock frequency by a user definable sampling factor.
 
+lcd		Module to print data on HD44780 compatible LCDs of size 4(2)x40
+		(rows x columns).
+
+lcd_decoder_base
+		Maps HEX codes from input vector to memory addresses of HD44780
+		compatible LCDs.
+
 spi2par		Data collector that transforms serial input into parallel
 		output using a SPI-like input interface.
 
