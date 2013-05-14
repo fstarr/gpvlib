@@ -24,9 +24,6 @@ ARCHITECTURE behavior OF spi2par_tb IS
 
 	-- Component Declaration for the Unit Under Test (UUT)
 	COMPONENT spi2par
-	GENERIC(
-		constant dout_width : integer;
-	);
 	PORT(
 		-- Ctrl ports
 		clk		: IN  std_logic;
@@ -66,9 +63,6 @@ BEGIN
 
 	-- Instantiate the Unit Under Test (UUT)
 	uut: spi2par
-	GENERIC MAP(
-		dout_width => 32,
-	)
 	PORT MAP (
 		clk => clk,
 		sclk => sclk,
@@ -112,6 +106,7 @@ BEGIN
 		-- insert stimulus here 
 
 		ce <= '1';
+		wait for clk_period*2;
 
 		for j in 1 to 5 loop
 			-- set ready signal

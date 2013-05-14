@@ -15,8 +15,8 @@
 -- Dependencies:	math_pack:log2 (src/math_pack.vhd)
 --
 --
--- Revision: 		Rev. 0.10 - On RTL functionally validated module (iSim)
--- 			Rev. 0.01 - File Created
+-- Revision: 		0.10 - On RTL functionally validated module (iSim)
+-- 			0.01 - File Created
 --
 -- Additional Comments:
 --
@@ -54,26 +54,24 @@ end spi2par;
 architecture Behavioral of spi2par is
 
 	-- controller fsm
-	type fsmtype is ( ctrl_init, idle, readbit0, readbit1, output );
+	type fsmtype is ( ctrl_init, idle, delay, readbit0, readbit1, finalread, output );
 	signal cstate	: fsmtype := ctrl_init;	-- current state
 	signal nstate	: fsmtype := ctrl_init;	-- next state
 
 	-- internal signals
-	signal sclk_op: std_logic := '0';
 	signal s_cnt  : integer := 0;
 	signal sa_cnt  : integer := 0;
 	signal s_dout : std_logic_vector( dout_width-1 downto 0 ) := ( others => '0' );
 	signal sclk_active : std_logic := '0';
-	signal sclk_active_op : std_logic := '0';
 
 begin
 	
-	fsm_state_update: process( rst, sclk_op )
+	fsm_state_update: process( rst, sclk )
 	begin
 		if( rst = '1' ) then
 			cstate <= ctrl_init;
 		elsif( ce = '1' ) then
-			if( rising_edge( sclk_op ) ) then
+			if( rising_edge( sclk ) ) then
 				cstate <= nstate;
 			end if;
 		end if;
@@ -88,23 +86,38 @@ begin
 				dout_valid <= '0';
 				s_cnt <= 0;
 				s_dout <= ( others => '0' );
-				
+				sclk_active <= '0';
+
 			when idle =>
 				-- NOP
 				dout_valid <= '0';
-			
+				sclk_active <= '0';
+
+			when delay =>
+				dout_valid <= '0';
+				sclk_active <= '1';
+
 			when readbit0 =>
 				-- read current bit from din
 				dout_valid <= '0';
 				s_dout( 31-s_cnt ) <= din;
 				s_cnt <= s_cnt + 1;
+				sclk_active <= '1';
 
 			when readbit1 =>
 				-- read current bit from din
 				dout_valid <= '0';
 				s_dout( 31-s_cnt ) <= din;
 				s_cnt <= s_cnt + 1;
-				
+				sclk_active <= '1';
+
+			when finalread =>
+				-- read current bit from din
+				dout_valid <= '0';
+				s_dout( 31-s_cnt ) <= din;
+				s_cnt <= s_cnt + 1;
+				sclk_active <= '0';
+
 			when output =>
 				-- present 32-bit output register
 				-- to output port (+ enable valid signal)
@@ -112,51 +125,55 @@ begin
 				dout_valid <= '1';
 				-- reset internal counter
 				s_cnt <= 0;
+				sclk_active <= '0';
 
 			when others =>
 				null;
 		end case;
 	end process;
 	
-	fsm_state_transition: process( cstate, sclk_active_op )
+	fsm_state_transition: process( cstate, din_rdy )
 	begin
 		nstate <= cstate;
 		
 		case cstate is
 			when ctrl_init =>
-				--if( din_rdy = '1' ) then
-				if( sclk_active_op = '1' ) then
-					nstate <= readbit0;
+				if( din_rdy = '1' ) then
+					nstate <= delay;
 				else
 					nstate <= idle;
 				end if;
-					
+
 			when idle =>
-				--if( din_rdy = '1' ) then
-				if( sclk_active_op = '1' ) then
-					nstate <= readbit0;
+				if( din_rdy = '1' ) then
+					nstate <= delay;
 				else
 					nstate <= idle;
 				end if;
-				
+
+			when delay =>
+				nstate <= readbit0;
+
 			when readbit0 =>
-				if( s_cnt < 31 ) then
+				if( s_cnt < 30 ) then
 					nstate <= readbit1;
 				else
-					nstate <= output;
+					nstate <= finalread;
 				end if;
 				
 			when readbit1 =>
-				if( s_cnt < 31 ) then
+				if( s_cnt < 30 ) then
 					nstate <= readbit0;
 				else
-					nstate <= output;
+					nstate <= finalread;
 				end if;
-				
+			
+			when finalread =>
+				nstate <= output;
+
 			when output =>
-				--if( din_rdy = '1' ) then
-				if( sclk_active_op = '1' ) then
-					nstate <= readbit0;
+				if( din_rdy = '1' ) then
+					nstate <= delay;
 				else
 					nstate <= idle;
 				end if;
@@ -166,42 +183,5 @@ begin
 		end case;
 	end process;
 
-	sclk_o_gen: process( rst, ce, clk, din_rdy, s_cnt )
-	begin
-		if( rst = '1' ) then
-			sclk_active <= '0';
-			sa_cnt <= 0;
-		elsif( ce = '1' ) then
-			if( rising_edge( clk ) ) then
-				if( din_rdy = '1' ) then
-					sa_cnt <= 0;
-					sclk_active <= '1';
-				elsif( sa_cnt >= 32 ) then
-					sa_cnt <= sa_cnt + 1;
-					sclk_active <= '0';
-				end if;
-			end if;
-		end if;
-	end process;
-
-	sclk_o_wire: process( clk, sclk_active )
-	begin
-		if( rising_edge( clk ) ) then
-			if( sclk_active = '1' ) then
-				sclk_op <= sclk;
-			else
-				sclk_op <= '0';
-			end if;
-		end if;
-	end process;
-
-	sclk_active_op_gen: process( sclk )
-	begin
-		if( rising_edge( sclk ) ) then
-			sclk_active_op <= sclk_active;
-		end if;
-	end process;
-
-	sclk_o <= sclk_op;
-	
+	sclk_o <= sclk and sclk_active;
 end Behavioral;

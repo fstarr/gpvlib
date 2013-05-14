@@ -42,7 +42,7 @@ begin
 	begin
 		if( rst = '1') then
 			int_cnt <= 0;
-			int_clkdv <= '0';
+			int_clkdv <= '1';
 		elsif( rising_edge( clk ) ) then
 			if( int_cnt = (int_sf-1) ) then
 				int_clkdv <= not int_clkdv;

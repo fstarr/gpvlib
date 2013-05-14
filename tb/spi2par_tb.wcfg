@@ -80,8 +80,8 @@
       <obj_property name="ElementShortName">sclk_active</obj_property>
       <obj_property name="ObjectShortName">sclk_active</obj_property>
    </wvobject>
-   <wvobject fp_name="/spi2par_tb/uut/sclk_active_op" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">sclk_active_op</obj_property>
-      <obj_property name="ObjectShortName">sclk_active_op</obj_property>
+   <wvobject fp_name="/spi2par_tb/uut/s_cnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">s_cnt</obj_property>
+      <obj_property name="ObjectShortName">s_cnt</obj_property>
    </wvobject>
 </wave_config>
