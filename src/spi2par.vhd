@@ -60,79 +60,88 @@ architecture Behavioral of spi2par is
 
 	-- internal signals
 	signal s_cnt  : integer := 0;
-	signal sa_cnt  : integer := 0;
 	signal s_dout : std_logic_vector( dout_width-1 downto 0 ) := ( others => '0' );
+	signal s_dout_valid : std_logic := '0';
 	signal sclk_active : std_logic := '0';
+-- 	signal delay_cnt : std_logic := '0';
 
 begin
-	
+
 	fsm_state_update: process( rst, sclk )
 	begin
 		if( rst = '1' ) then
 			cstate <= ctrl_init;
-		elsif( ce = '1' ) then
-			if( rising_edge( sclk ) ) then
+		elsif( rising_edge( sclk ) ) then
+			if( ce = '1' ) then
 				cstate <= nstate;
 			end if;
 		end if;
 	end process;
 	
-	fsm_output: process( cstate )
+	fsm_output: process( sclk )
 	begin
-		case cstate is
-			when ctrl_init =>
-				-- resest all outputs and internals
-				dout <= ( others => '0' );
-				dout_valid <= '0';
-				s_cnt <= 0;
-				s_dout <= ( others => '0' );
-				sclk_active <= '0';
+		if ( rising_edge( sclk ) ) then
+			case cstate is
+				when ctrl_init =>
+					-- resest all outputs and internals
+					s_dout_valid <= '0';
+					s_cnt <= 0;
+					s_dout <= ( others => '0' );
+					sclk_active <= '0';
+-- 					delay_cnt <= '0';
 
-			when idle =>
-				-- NOP
-				dout_valid <= '0';
-				sclk_active <= '0';
+				when idle =>
+					-- NOP
+					s_dout_valid <= '0';
+					sclk_active <= '0';
+-- 					delay_cnt <= '0';
 
-			when delay =>
-				dout_valid <= '0';
-				sclk_active <= '1';
+				when delay =>
+					s_dout_valid <= '0';
+					sclk_active <= '1';
+-- 					delay_cnt <= '1';
 
-			when readbit0 =>
-				-- read current bit from din
-				dout_valid <= '0';
-				s_dout( 31-s_cnt ) <= din;
-				s_cnt <= s_cnt + 1;
-				sclk_active <= '1';
+				when readbit0 =>
+					-- read current bit from din
+					s_dout_valid <= '0';
+					s_dout( 31-s_cnt ) <= din;
+					s_cnt <= s_cnt + 1;
+					sclk_active <= '1';
+-- 					delay_cnt <= '0';
 
-			when readbit1 =>
-				-- read current bit from din
-				dout_valid <= '0';
-				s_dout( 31-s_cnt ) <= din;
-				s_cnt <= s_cnt + 1;
-				sclk_active <= '1';
+				when readbit1 =>
+					-- read current bit from din
+					s_dout_valid <= '0';
+					s_dout( 31-s_cnt ) <= din;
+					s_cnt <= s_cnt + 1;
+					sclk_active <= '1';
+-- 					delay_cnt <= '0';
 
-			when finalread =>
-				-- read current bit from din
-				dout_valid <= '0';
-				s_dout( 31-s_cnt ) <= din;
-				s_cnt <= s_cnt + 1;
-				sclk_active <= '0';
+				when finalread =>
+					-- read current bit from din
+					s_dout_valid <= '0';
+					s_dout( 31-s_cnt ) <= din;
+					s_cnt <= s_cnt + 1;
+					sclk_active <= '0';
+-- 					delay_cnt <= '0';
 
-			when output =>
-				-- present 32-bit output register
-				-- to output port (+ enable valid signal)
-				dout <= s_dout;
-				dout_valid <= '1';
-				-- reset internal counter
-				s_cnt <= 0;
-				sclk_active <= '0';
+				when output =>
+					-- present 32-bit output register
+					-- to output port (+ enable valid signal)
+					s_dout_valid <= '1';
+					-- reset internal counter
+					s_cnt <= 0;
+					sclk_active <= '0';
+-- 					delay_cnt <= '0';
 
-			when others =>
-				null;
-		end case;
+				when others =>
+					null;
+			end case;
+		end if;
 	end process;
 	
-	fsm_state_transition: process( cstate, din_rdy )
+-- 	fsm_state_transition: process( cstate, din_rdy, s_cnt, delay_cnt )
+	fsm_state_transition: process( cstate, din_rdy, s_cnt )
 	begin
 		nstate <= cstate;
 		
@@ -152,7 +161,11 @@ begin
 				end if;
 
 			when delay =>
-				nstate <= readbit0;
+-- 				if( delay_cnt = '1' ) then
+					nstate <= readbit0;
+-- 				else
+-- 					nstate <= delay;
+-- 				end if;
 
 			when readbit0 =>
 				if( s_cnt < 30 ) then
@@ -183,5 +196,31 @@ begin
 		end case;
 	end process;
 
-	sclk_o <= sclk and sclk_active;
+	sclk_gen: process( rst, clk )
+	begin
+		if( rst = '1' ) then
+			sclk_o <= '0';
+		elsif( rising_edge( clk ) ) then
+			if( sclk_active = '1' ) then
+				sclk_o <= sclk;
+			else
+				sclk_o <= '0';
+			end if;
+		end if;
+	end process;
+-- 	sclk_o <= sclk and sclk_active;	-- hazard in post route sim!!!
+
+	dout_gen: process( rst, clk )
+	begin
+		if( rst = '1' ) then
+			dout <= ( others => '0' );
+			dout_valid <= '0';
+		elsif( rising_edge( clk ) ) then
+			if( s_dout_valid = '1' ) then
+				dout <= s_dout;
+			end if;
+			dout_valid <= s_dout_valid;
+		end if;
+	end process;
+
 end Behavioral;
