@@ -15,7 +15,8 @@
 -- Dependencies:	math_pack:log2 (src/math_pack.vhd)
 --
 --
--- Revision: 		0.10 - On RTL functionally validated module (iSim)
+-- Revision:		0.20 - Functionally validated module (post translate, iSim)
+--			0.10 - Functionally validated module (post synthesis, iSim)
 -- 			0.01 - File Created
 --
 -- Additional Comments:
