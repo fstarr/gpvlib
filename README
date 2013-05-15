@@ -32,7 +32,7 @@ lcd_decoder_base
 spi2par		Data collector that transforms serial input into parallel
 		output using a SPI-like input interface.
 
-vga_out*	Very simple VGA drivers writte in pure VHDL. There are separate
+vga_out*	Very simple VGA drivers written in pure VHDL. There are separate
 		modules for different screen resolutions and refresh rates.
 
 
