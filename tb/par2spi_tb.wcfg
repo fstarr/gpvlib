@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/sfo/dev/vhdl/par2spi/par2spi_tb_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="math_pack" />
+            <top_module name="par2spi_tb" />
+            <top_module name="std_logic_1164" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="14" />
+   <wvobject fp_name="/par2spi_tb/sysrst_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sysrst_i</obj_property>
+      <obj_property name="ObjectShortName">sysrst_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/sclk_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sclk_i</obj_property>
+      <obj_property name="ObjectShortName">sclk_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/data_i" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">data_i[19:0]</obj_property>
+      <obj_property name="ObjectShortName">data_i[19:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/din_rdy_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">din_rdy_i</obj_property>
+      <obj_property name="ObjectShortName">din_rdy_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/addr_i" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addr_i[2:0]</obj_property>
+      <obj_property name="ObjectShortName">addr_i[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/data_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">data_o</obj_property>
+      <obj_property name="ObjectShortName">data_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/sclk_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sclk_o</obj_property>
+      <obj_property name="ObjectShortName">sclk_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/sync_n_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sync_n_o</obj_property>
+      <obj_property name="ObjectShortName">sync_n_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/ldac_n_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ldac_n_o</obj_property>
+      <obj_property name="ObjectShortName">ldac_n_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/clk_period" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">clk_period</obj_property>
+      <obj_property name="ObjectShortName">clk_period</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/uut/cstate" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">cstate</obj_property>
+      <obj_property name="ObjectShortName">cstate</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/uut/nstate" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">nstate</obj_property>
+      <obj_property name="ObjectShortName">nstate</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/uut/output_reg" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">output_reg[23:0]</obj_property>
+      <obj_property name="ObjectShortName">output_reg[23:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/par2spi_tb/uut/data_cnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">data_cnt</obj_property>
+      <obj_property name="ObjectShortName">data_cnt</obj_property>
+   </wvobject>
+</wave_config>

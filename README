@@ -29,6 +29,9 @@ lcd_decoder_base
 		Maps HEX codes from input vector to memory addresses of HD44780
 		compatible LCDs.
 
+par2spi		Data generator that transforms parallel input data into a
+		serial output bit stream using a SPI-like output interface.
+
 spi2par		Data collector that transforms serial input into parallel
 		output using a SPI-like input interface.
 
