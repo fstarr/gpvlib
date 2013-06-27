@@ -11,11 +11,12 @@
 -- 			of the controller FSM.
 -- 
 -- 			For simulation in Xilinx iSim use tb/par2spi_tb.vhd
--- 			together with waveform config file tb/par2spi_tb.wcfg
+-- 			together with waveform config file tb/par2spi_tb.wcfg.
 --
 -- Dependencies:	math_pack:log2 (src/math_pack.vhd)
 --
--- Revision:		0.01 - File Created
+-- Revision:		0.10 - Module functionally validated on RTL (iSim).
+-- 			0.01 - File Created.
 --
 -- Additional Comments:	
 --
@@ -24,15 +25,6 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 use work.math_pack.all;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity par2spi is
 	Generic (
@@ -62,8 +54,7 @@ architecture Behavioral of par2spi is
 	-- internal signals
 	signal rst		: std_logic := '0';
 	signal sclk		: std_logic := '0';
-	signal sclk_h		: std_logic := '0';
-	signal output_reg	: std_logic_vector( addr_width + data_width downto 0 ) := ( others => '1' );
+	signal output_reg	: std_logic_vector( addr_width + data_width downto 0 ) := ( others => '0' );
 
 	signal data_cnt		: integer range 0 to ( addr_width + data_width ) := 0;
 
@@ -78,8 +69,10 @@ begin
 		end if;
 	end process;
 
-	fsm_output: process( cstate, sclk_h )
+	fsm_output: process
 	begin
+		wait until rising_edge( sclk );
+
 		case cstate is
 			when ctrl_init =>
 				data_o <= '0';
@@ -99,16 +92,13 @@ begin
 				ldac_n_o <= '1';
 				data_cnt <= 0;
 
--- 				input_reg <= data_i;
--- 				addr_reg <= addr_i;
-				output_reg <= '1' & addr_i & data_i;
+				output_reg <= '0' & addr_i & data_i;
 
 			when write_output =>
 				sync_n_o <= '0';
 				ldac_n_o <= '1';
 				data_cnt <= data_cnt + 1;
 
-				-- data ...
 				data_o <= output_reg( addr_width + data_width - data_cnt );
 
 			when finish_output =>
@@ -125,8 +115,10 @@ begin
 		end case;
 	end process;
 
-	fsm_transition: process( sclk )
+	fsm_transition: process( cstate, din_rdy_i, data_cnt )
 	begin
+		nstate <= cstate;
+
 		case cstate is
 			when ctrl_init =>
 				nstate <= idle;
@@ -142,7 +134,7 @@ begin
 				nstate <= write_output;
 
 			when write_output =>
-				if( data_cnt < 24 ) then
+				if( data_cnt < 23 ) then
 					nstate <= write_output;
 				else
 					nstate <= finish_output;
@@ -156,13 +148,6 @@ begin
 		end case;
 	end process;
 
-	int_clk: process( sclk )
-	begin
-		if( rising_edge( sclk ) ) then
-			sclk_h <= not sclk_h;
-		end if;
-	end process;
-
 	-- -------------- --
 	-- signal mapping --
 	--------------------
@@ -170,6 +155,8 @@ begin
 	-- internal signals
 	rst <= sysrst_i;
 	sclk <= sclk_i;
+
+	-- output ports
 	sclk_o <= sclk;
 
 end Behavioral;
