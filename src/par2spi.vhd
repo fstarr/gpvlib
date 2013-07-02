@@ -71,7 +71,7 @@ begin
 		end if;
 	end process;
 
-	fsm_output: process( )
+	fsm_output: process
 	begin
 		wait until rising_edge( sclk );
 
