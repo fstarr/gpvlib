@@ -40,7 +40,9 @@ entity par2spi is
 		data_o		: out STD_LOGIC;	-- serial output bit stream
 		sclk_o		: out STD_LOGIC;	-- serial interface clk (out)
 		sync_n_o	: out STD_LOGIC;	-- output bit stream syncronisation
-		ldac_n_o	: out STD_LOGIC		-- output bit stream valid
+		ldac_n_o	: out STD_LOGIC;	-- output bit stream valid
+		reset_n_o	: out STD_LOGIC;	-- reset
+		clr_n_o		: out STD_LOGIC		-- clear
 	);
 end par2spi;
 
@@ -79,18 +81,29 @@ begin
 				sync_n_o <= '1';
 				ldac_n_o <= '1';
 				data_cnt <= 0;
+				-- set DAC in reset state
+				reset_n_o <= '0';
+				clr_n_o <= '0';
 
 			when idle =>
 				data_o <= '0';
 				sync_n_o <= '1';
 				ldac_n_o <= '1';
 				data_cnt <= 0;
+				-- set DAC in operating mode
+				-- (set output according to DAC input register)
+				reset_n_o <= '1';
+				clr_n_o <= '1';
 
 			when input =>
 				data_o <= '0';
 				sync_n_o <= '1';
 				ldac_n_o <= '1';
 				data_cnt <= 0;
+				-- set DAC in operating mode
+				-- (set output according to DAC input register)
+				reset_n_o <= '1';
+				clr_n_o <= '1';
 
 				output_reg <= '0' & addr_i & data_i;
 
@@ -98,6 +111,10 @@ begin
 				sync_n_o <= '0';
 				ldac_n_o <= '1';
 				data_cnt <= data_cnt + 1;
+				-- set DAC in operating mode
+				-- (set output according to DAC input register)
+				reset_n_o <= '1';
+				clr_n_o <= '1';
 
 				data_o <= output_reg( addr_width + data_width - data_cnt );
 
@@ -106,12 +123,19 @@ begin
 				sync_n_o <= '1';
 				ldac_n_o <= '0';
 				data_cnt <= 0;
+				-- set DAC in operating mode
+				-- (set output according to DAC input register)
+				reset_n_o <= '1';
+				clr_n_o <= '1';
 
 			when others =>
 				data_o <= '0';
 				sync_n_o <= '1';
 				ldac_n_o <= '1';
 				data_cnt <= 0;
+				-- set DAC in reset state
+				reset_n_o <= '0';
+				clr_n_o <= '0';
 		end case;
 	end process;
 
