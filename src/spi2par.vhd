@@ -56,147 +56,125 @@ architecture Behavioral of spi2par is
 	-- controller fsm
 	type fsmtype is ( ctrl_init, idle, delay, readbit0, readbit1, finalread, output );
 	signal cstate	: fsmtype := ctrl_init;	-- current state
-	signal nstate	: fsmtype := ctrl_init;	-- next state
 
 	-- internal signals
 	signal s_cnt  : integer := 0;
 	signal s_dout : std_logic_vector( dout_width-1 downto 0 ) := ( others => '0' );
 	signal s_dout_valid : std_logic := '0';
 	signal sclk_active : std_logic := '0';
--- 	signal delay_cnt : std_logic := '0';
 
 begin
 
-	fsm_state_update: process( rst, sclk )
+	spi2par_fsm: process
 	begin
-		if( rst = '1' ) then
-			cstate <= ctrl_init;
-		elsif( rising_edge( sclk ) ) then
-			if( ce = '1' ) then
-				cstate <= nstate;
-			end if;
-		end if;
-	end process;
-	
-	fsm_output: process( sclk )
-	begin
-		if ( rising_edge( sclk ) ) then
+		wait until rising_edge( sclk );
+		
+		if( ce = '1' ) then
 			case cstate is
 				when ctrl_init =>
+					-- *** OUTPUT *** --
 					-- resest all outputs and internals
 					s_dout_valid <= '0';
 					s_cnt <= 0;
 					s_dout <= ( others => '0' );
 					sclk_active <= '0';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					if( din_rdy = '1' ) then
+						cstate <= delay;
+					else
+						cstate <= idle;
+					end if;
 
 				when idle =>
 					-- NOP
+					-- *** OUTPUT *** --
 					s_dout_valid <= '0';
 					sclk_active <= '0';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					if( din_rdy = '1' ) then
+						cstate <= delay;
+					else
+						cstate <= idle;
+					end if;
 
 				when delay =>
+					-- *** OUTPUT *** --
 					s_dout_valid <= '0';
 					sclk_active <= '1';
--- 					delay_cnt <= '1';
+
+					-- *** TRANSITION *** ---
+					cstate <= readbit0;
 
 				when readbit0 =>
 					-- read current bit from din
+					-- *** OUTPUT *** --
 					s_dout_valid <= '0';
 					s_dout( 31-s_cnt ) <= din;
 					s_cnt <= s_cnt + 1;
 					sclk_active <= '1';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					if( s_cnt < 30 ) then
+						cstate <= readbit1;
+					else
+						cstate <= finalread;
+					end if;
 
 				when readbit1 =>
 					-- read current bit from din
+					-- *** OUTPUT *** --
 					s_dout_valid <= '0';
 					s_dout( 31-s_cnt ) <= din;
 					s_cnt <= s_cnt + 1;
 					sclk_active <= '1';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					if( s_cnt < 30 ) then
+						cstate <= readbit0;
+					else
+						cstate <= finalread;
+					end if;
 
 				when finalread =>
 					-- read current bit from din
+					-- *** OUTPUT *** --
 					s_dout_valid <= '0';
 					s_dout( 31-s_cnt ) <= din;
 					s_cnt <= s_cnt + 1;
 					sclk_active <= '0';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					cstate <= output;
 
 				when output =>
+					-- *** OUTPUT *** --
 					-- present 32-bit output register
 					-- to output port (+ enable valid signal)
 					s_dout_valid <= '1';
 					-- reset internal counter
 					s_cnt <= 0;
 					sclk_active <= '0';
--- 					delay_cnt <= '0';
+
+					-- *** TRANSITION *** ---
+					if( din_rdy = '1' ) then
+						cstate <= delay;
+					else
+						cstate <= idle;
+					end if;
 
 				when others =>
-					null;
+					-- *** OUTPUT *** --
+					-- *** TRANSITION *** ---
+					cstate <= ctrl_init;
 			end case;
 		end if;
-	end process;
-	
--- 	fsm_state_transition: process( cstate, din_rdy, s_cnt, delay_cnt )
--- 	fsm_state_transition: process( cstate, din_rdy, s_cnt )
-	fsm_state_transition: process( clk )
-	begin
-		if( rising_edge( clk ) ) then
-		nstate <= cstate;
-		
-		case cstate is
-			when ctrl_init =>
-				if( din_rdy = '1' ) then
-					nstate <= delay;
-				else
-					nstate <= idle;
-				end if;
 
-			when idle =>
-				if( din_rdy = '1' ) then
-					nstate <= delay;
-				else
-					nstate <= idle;
-				end if;
-
-			when delay =>
--- 				if( delay_cnt = '1' ) then
-					nstate <= readbit0;
--- 				else
--- 					nstate <= delay;
--- 				end if;
-
-			when readbit0 =>
-				if( s_cnt < 30 ) then
-					nstate <= readbit1;
-				else
-					nstate <= finalread;
-				end if;
-				
-			when readbit1 =>
-				if( s_cnt < 30 ) then
-					nstate <= readbit0;
-				else
-					nstate <= finalread;
-				end if;
-			
-			when finalread =>
-				nstate <= output;
-
-			when output =>
-				if( din_rdy = '1' ) then
-					nstate <= delay;
-				else
-					nstate <= idle;
-				end if;
-				
-			when others =>
-				nstate <= ctrl_init;
-		end case;
+		if( rst = '1' ) then
+			cstate <= ctrl_init;
 		end if;
+
 	end process;
 
 	sclk_gen: process( rst, clk )
@@ -211,19 +189,8 @@ begin
 			end if;
 		end if;
 	end process;
--- 	sclk_o <= sclk and sclk_active;	-- hazard in post route sim!!!
 
-	dout_gen: process( rst, clk )
-	begin
-		if( rst = '1' ) then
-			dout <= ( others => '0' );
-			dout_valid <= '0';
-		elsif( rising_edge( clk ) ) then
-			if( s_dout_valid = '1' ) then
-				dout <= s_dout;
-			end if;
-			dout_valid <= s_dout_valid;
-		end if;
-	end process;
+	dout <= s_dout;
+	dout_valid <= s_dout_valid;
 
 end Behavioral;
